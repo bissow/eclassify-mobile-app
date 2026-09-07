@@ -1,0 +1,23 @@
+import 'package:eClassify/features/item/models/item_preview.dart';
+import 'package:eClassify/core/utils/json_helper.dart';
+import 'package:flutter/foundation.dart';
+
+@immutable
+class SearchedItem {
+  SearchedItem.fromJson(Json json)
+    : id = json['id'] as int,
+      name = json['name'] as String;
+
+  SearchedItem.fromItem(ItemPreview item) : id = item.id, name = item.name;
+
+  final int id;
+  final String name;
+
+  Json get toJson => {'id': id, 'name': name};
+
+  @override
+  bool operator ==(Object other) => other is SearchedItem && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
