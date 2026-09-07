@@ -35,6 +35,7 @@ import 'package:eClassify/core/cubits/app_theme_cubit.dart';
 import 'package:eClassify/core/cubits/bottom_nav_cubit.dart';
 import 'package:eClassify/core/cubits/language_cubit.dart';
 import 'package:eClassify/core/cubits/system_settings_cubit.dart';
+import 'package:eClassify/features/store/cubits/my_store_cubit.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nested/nested.dart';
@@ -78,6 +79,7 @@ class RegisterCubits {
     BlocProvider(create: (_) => ReelLikeCubit()),
     BlocProvider(create: (_) => LikedReelsCubit()),
     BlocProvider(create: (_) => ItemFavoriteCubit()),
+    BlocProvider(create: (_) => MyStoreCubit()),
   ];
 
   /// Every cubit here holds data scoped to the current logged-in user.
@@ -99,5 +101,6 @@ class RegisterCubits {
         (c) => c.read<VerificationRequestCubit>(),
         (c) => c.read<UserProfileCubit>(),
         (c) => c.read<LikedReelsCubit>(),
+        (c) => c.read<MyStoreCubit>(),
       ];
 }

@@ -18,6 +18,7 @@ class User {
     required this.showPersonalDetails,
     required this.notificationsEnabled,
     required this.isVerified,
+    this.hasStore = false,
   });
 
   User.fromJson(Json json)
@@ -32,7 +33,8 @@ class User {
       authProvider = AuthProvider.fromRaw(json['type'] as String?),
       showPersonalDetails = (json['show_personal_details'] as int?) == 1,
       notificationsEnabled = (json['notification'] as int?) == 1,
-      isVerified = (json['is_verified'] as int?) == 1;
+      isVerified = (json['is_verified'] as int?) == 1,
+      hasStore = json['has_store'] == true || json['has_store'] == 1;
 
   final int id;
   final String name;
@@ -46,6 +48,7 @@ class User {
   final bool showPersonalDetails;
   final bool notificationsEnabled;
   final bool isVerified;
+  final bool hasStore;
 
   bool get isProfileComplete =>
       name.isNotNullAndNotEmpty && email.isNotNullAndNotEmpty;
@@ -57,6 +60,7 @@ class User {
     String? address,
     bool? showPersonalDetails,
     bool? notificationsEnabled,
+    bool? hasStore,
   }) {
     return User(
       id: id,
@@ -71,6 +75,7 @@ class User {
       showPersonalDetails: showPersonalDetails ?? this.showPersonalDetails,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       isVerified: isVerified,
+      hasStore: hasStore ?? this.hasStore,
     );
   }
 
