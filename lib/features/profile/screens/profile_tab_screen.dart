@@ -26,6 +26,8 @@ import 'package:eClassify/features/profile/screens/widgets/user_verification_car
 import 'package:eClassify/features/subscription/cubits/active_subscription_package_cubit.dart';
 import 'package:eClassify/features/user_profile/cubits/user_profile_cubit.dart';
 import 'package:eClassify/features/verification/cubits/verification_request_cubit.dart';
+import 'package:eClassify/features/store/cubits/my_store_cubit.dart';
+import 'package:eClassify/features/store/models/store_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_review/in_app_review.dart';
@@ -43,6 +45,16 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
     with AutomaticKeepAliveClientMixin<ProfileTabScreen> {
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (AppSession.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<MyStoreCubit>().fetchMyStore();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +75,22 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
             MenuItem(
               icon: AppIcons.storefrontFill,
               title: 'myStore',
-              action: ScreenPushAction(
-                route: Routes.storeSetup,
-                guarded: true,
+              action: CustomAction(
+                onTap: () async {
+                  final myStoreState = context.read<MyStoreCubit>().state;
+                  StoreModel? existingStore;
+                  if (myStoreState is MyStoreSuccess) {
+                    existingStore = myStoreState.store;
+                  }
+                  await Navigator.pushNamed(
+                    context,
+                    Routes.storeSetup,
+                    arguments: existingStore,
+                  );
+                  if (context.mounted) {
+                    context.read<MyStoreCubit>().fetchMyStore();
+                  }
+                },
               ),
             ),
         ],
@@ -234,6 +259,7 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
             context.read<UserProfileCubit>().getUserProfile();
             context.read<FollowingListCubit>().getUsers();
             context.read<FollowersListCubit>().getUsers();
+            context.read<MyStoreCubit>().fetchMyStore();
           },
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
