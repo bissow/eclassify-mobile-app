@@ -89,7 +89,7 @@ class _AdDetailsScreenState extends State<AdDetailsScreen>
     with DeepLinkAware<AdDetailsScreen, ItemDeepLink> {
   Item? item;
 
-  MyItem? get myItem => item as MyItem?;
+  MyItem? get myItem => item is MyItem ? item as MyItem : null;
 
   bool? get isMyAd => widget.isMyItem ?? widget.preview?.isMyAd;
 
@@ -221,8 +221,11 @@ class _AdDetailsScreenState extends State<AdDetailsScreen>
                     _divider(),
                     if (Constant.systemSettings.isBannerAdEnabled)
                       GoogleBannerAd(),
-                    if (isMyAd && !(myItem?.isFeatured ?? true))
-                      FeatureAdCard(itemId: myItem!.id),
+                    if (isMyAd && !(myItem?.isFeatured ?? item?.isFeatured ?? true))
+                      FeatureAdCard(
+                        itemId: myItem?.id ?? item!.id,
+                        price: double.tryParse(item?.price?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '') ?? 0.0,
+                      ),
                     if ((item?.customFields).isNotNullAndNotEmpty)
                       CustomFieldsWidget(fields: item!.customFieldsByFieldId),
                     const DetailBannerAdWidget(

@@ -4,6 +4,7 @@ import 'package:eClassify/features/item/models/item_preview.dart';
 import 'package:eClassify/features/favorite/screens/widgets/favorite_button.dart';
 import 'package:eClassify/features/item/screens/widgets/featured_badge.dart';
 import 'package:eClassify/features/item/screens/widgets/item_status_chip.dart';
+import 'package:eClassify/features/item/screens/widgets/promotion_badge_strip.dart';
 import 'package:eClassify/core/widgets/text/auto_size_text.dart';
 import 'package:eClassify/core/widgets/images/custom_image.dart';
 import 'package:eClassify/core/theme/theme_colors.dart';
@@ -97,8 +98,70 @@ class _ItemListTile extends StatelessWidget {
                 radius: 12,
                 adaptive: true,
               ),
-              if (item.isFeatured)
-                PositionedDirectional(start: 5, top: 5, child: FeaturedBadge()),
+              if (item.hasActiveSale)
+                PositionedDirectional(
+                  start: 5,
+                  top: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade700,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '🔥 ${item.primaryActiveSale!.discountType == 'percentage' || (item.primaryActiveSale!.discountPercentage != null && item.primaryActiveSale!.discountPercentage.toString().isNotEmpty) ? '${item.primaryActiveSale!.discountPercentage ?? item.primaryActiveSale!.discountValue}% OFF' : 'SALE'}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
+              else if (item.isFeatured)
+                PositionedDirectional(start: 5, top: 5, child: FeaturedBadge())
+              else if (item.isSpotlight)
+                PositionedDirectional(
+                  start: 5,
+                  top: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Colors.amber, Colors.deepOrange],
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '★ SPOTLIGHT',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
+              else if (item.isTopAd)
+                PositionedDirectional(
+                  start: 5,
+                  top: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '▲ TOP',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
           10.hGap,
@@ -132,22 +195,66 @@ class _ItemListTile extends StatelessWidget {
                           ),
                       ],
                     ),
+                  if (item.activePromotions != null &&
+                      item.activePromotions!.hasActivePromotions)
+                    PromotionBadgeStrip(
+                      promotions: item.activePromotions!,
+                      compact: true,
+                    ),
+
                   Row(
                     children: [
                       Expanded(
-                        child: AutoSizeText(
-                          text:
-                              item.price ??
-                              'contactForOffer'.translate(context),
-                          style: context.titleMedium.copyWith(
-                            color: context.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                            fontFeatures: [FontFeature.tabularFigures()],
-                          ),
-                          maxLines: 1,
-                          minimumFontSize: 14,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        child: item.hasActiveSale
+                            ? Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Flexible(
+                                    child: AutoSizeText(
+                                      text: (item.primaryActiveSale!.formattedPromotionalPrice != null && item.primaryActiveSale!.formattedPromotionalPrice!.isNotEmpty)
+                                          ? item.primaryActiveSale!.formattedPromotionalPrice!
+                                          : '${item.primaryActiveSale!.promotionalPrice}',
+                                      style: context.titleMedium.copyWith(
+                                        color: context.colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                        fontFeatures: [FontFeature.tabularFigures()],
+                                      ),
+                                      maxLines: 1,
+                                      minimumFontSize: 13,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (item.price != null && item.price!.isNotEmpty) ...[
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        item.price!,
+                                        style: context.bodySmall.copyWith(
+                                          decoration: TextDecoration.lineThrough,
+                                          color: context.colorScheme.outline,
+                                          fontSize: 10,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              )
+                            : AutoSizeText(
+                                text:
+                                    item.price ??
+                                    'contactForOffer'.translate(context),
+                                style: context.titleMedium.copyWith(
+                                  color: context.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                ),
+                                maxLines: 1,
+                                minimumFontSize: 14,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                       ),
                       if (item is! MyItemPreview)
                         FavoriteButton(itemId: item.id, isLiked: item.isLiked),
@@ -223,11 +330,73 @@ class _ItemGridCard extends StatelessWidget {
                   radius: 12,
                 ),
               ),
-              if (item.isFeatured)
+              if (item.hasActiveSale)
+                PositionedDirectional(
+                  start: 10,
+                  top: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade700,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '🔥 ${item.primaryActiveSale!.discountType == 'percentage' || (item.primaryActiveSale!.discountPercentage != null && item.primaryActiveSale!.discountPercentage.toString().isNotEmpty) ? '${item.primaryActiveSale!.discountPercentage ?? item.primaryActiveSale!.discountValue}% OFF' : 'SALE'}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
+              else if (item.isFeatured)
                 PositionedDirectional(
                   start: 10,
                   top: 10,
                   child: FeaturedBadge(),
+                )
+              else if (item.isSpotlight)
+                PositionedDirectional(
+                  start: 10,
+                  top: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Colors.amber, Colors.deepOrange],
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '★ SPOTLIGHT',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
+              else if (item.isTopAd)
+                PositionedDirectional(
+                  start: 10,
+                  top: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      '▲ TOP',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               PositionedDirectional(
                 bottom: -10,
@@ -248,17 +417,54 @@ class _ItemGridCard extends StatelessWidget {
               spacing: 5,
               children: [
                 Flexible(
-                  child: AutoSizeText(
-                    text: item.price ?? 'contactToOffer'.translate(context),
-                    style: context.titleMedium.copyWith(
-                      color: context.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
-                    maxLines: 1,
-                    minimumFontSize: 14,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: item.hasActiveSale
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Flexible(
+                              child: AutoSizeText(
+                                text: (item.primaryActiveSale!.formattedPromotionalPrice != null && item.primaryActiveSale!.formattedPromotionalPrice!.isNotEmpty)
+                                    ? item.primaryActiveSale!.formattedPromotionalPrice!
+                                    : '${item.primaryActiveSale!.promotionalPrice}',
+                                style: context.titleMedium.copyWith(
+                                  color: context.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                ),
+                                maxLines: 1,
+                                minimumFontSize: 13,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (item.price != null && item.price!.isNotEmpty) ...[
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  item.price!,
+                                  style: context.bodySmall.copyWith(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: context.colorScheme.outline,
+                                    fontSize: 10,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
+                        )
+                      : AutoSizeText(
+                          text: item.price ?? 'contactToOffer'.translate(context),
+                          style: context.titleMedium.copyWith(
+                            color: context.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                          ),
+                          maxLines: 1,
+                          minimumFontSize: 14,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                 ),
                 Flexible(
                   child: Text(

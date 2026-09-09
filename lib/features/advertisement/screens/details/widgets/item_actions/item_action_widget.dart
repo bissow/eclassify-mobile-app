@@ -41,13 +41,13 @@ class _ItemActionWidgetState extends State<ItemActionWidget> {
         Constant.horizontalPadding,
         MediaQuery.paddingOf(context).bottom + 8,
       ),
-      child: displayItem.isMyAd
+      child: (displayItem.isMyAd && displayItem is MyItem)
           ? MultiBlocProvider(
               providers: [
                 BlocProvider(create: (_) => RenewItemCubit()),
                 BlocProvider(create: (_) => ItemStatusCubit()),
               ],
-              child: SellerItemActions(item: displayItem as MyItem),
+              child: SellerItemActions(item: displayItem),
             )
           : BuyerItemAction(item: displayItem),
     );

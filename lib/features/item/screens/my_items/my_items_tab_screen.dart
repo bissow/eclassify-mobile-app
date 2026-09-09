@@ -1,3 +1,4 @@
+import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/features/item/cubits/delete_item_cubit.dart';
 import 'package:eClassify/features/notification/cubits/notification_event_cubit.dart';
 import 'package:eClassify/features/item/screens/widgets/modals/delete_advertisement_dialog.dart';
@@ -111,8 +112,16 @@ class _MyItemsScreenState extends State<MyItemsScreen>
                   icon: Icon(AppIcons.trash),
                 ),
               ),
+              IconButton(
+                tooltip: 'promotionsPerformance'.translate(context),
+                onPressed: () {
+                  Navigator.pushNamed(context, Routes.sellerPromotions);
+                },
+                icon: Icon(AppIcons.trendUp),
+              ),
             ],
           ),
+
           body: TabBarView(
             controller: _tabController,
             children: [
