@@ -107,8 +107,18 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
                 guarded: true,
               ),
             ),
+          if (isAuthenticated)
+            MenuItem(
+              icon: AppIcons.qrCode,
+              title: 'storeQrStandee',
+              action: ScreenPushAction(
+                route: Routes.sellerQrStandee,
+                guarded: true,
+              ),
+            ),
         ],
       ),
+
 
       MenuSection(
         items: [
@@ -176,8 +186,14 @@ class _ProfileTabScreenState extends State<ProfileTabScreen>
               guarded: true,
             ),
           ),
+          MenuItem(
+            icon: AppIcons.qrCode,
+            title: 'scanStoreQr',
+            action: ScreenPushAction(route: Routes.qrScanner),
+          ),
         ],
       ),
+
       MenuSection(
         items: [
           MenuItem(
