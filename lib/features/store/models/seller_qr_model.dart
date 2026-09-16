@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:eClassify/features/store/models/store_model.dart';
 
 class LocationWarningModel {
@@ -107,6 +108,24 @@ class SellerQrCodeModel {
             ? (rawJson['data'] as Map<String, dynamic>)['qr_code'] as Map<String, dynamic>
             : rawJson;
 
+    String? rawSvg = (json['svg_raw'] ?? json['raw_svg']) as String?;
+    if ((rawSvg == null || rawSvg.isEmpty) && json['qr_base64_svg'] is String) {
+      final b64 = json['qr_base64_svg'] as String;
+      if (b64.contains(',')) {
+        try {
+          rawSvg = utf8.decode(base64.decode(b64.split(',').last));
+        } catch (_) {
+          rawSvg = b64;
+        }
+      } else {
+        try {
+          rawSvg = utf8.decode(base64.decode(b64));
+        } catch (_) {
+          rawSvg = b64;
+        }
+      }
+    }
+
     return SellerQrCodeModel(
       id: json['id'] as int?,
       userId: json['user_id'] as int?,
@@ -122,16 +141,16 @@ class SellerQrCodeModel {
       customTagline: (json['custom_tagline'] ?? json['tagline']) as String?,
       customColor: (json['custom_color'] ?? json['primary_color']) as String?,
       centerLogoUrl: (json['effective_center_logo_url'] ?? json['center_logo_url']) as String?,
-      canCustomizeColors: json['can_customize_colors'] as bool? ?? true,
-      canCustomizeLogo: json['can_customize_logo'] as bool? ?? true,
-      canCustomizeSlug: json['can_customize_slug'] as bool? ?? true,
-      defaultFooterText: (json['default_footer_text'] ?? json['footer_text']) as String?,
-      footerLogoUrl: (json['footer_logo_url'] ?? json['footer_logo']) as String?,
-      badgeText: json['badge_text'] as String?,
+      canCustomizeColors: (json['can_customize_colors'] ?? rawJson['can_customize_colors']) as bool? ?? true,
+      canCustomizeLogo: (json['can_customize_logo'] ?? rawJson['can_customize_logo']) as bool? ?? true,
+      canCustomizeSlug: (json['can_customize_slug'] ?? rawJson['can_customize_slug']) as bool? ?? true,
+      defaultFooterText: (json['default_footer_text'] ?? json['footer_text'] ?? (rawJson['default_settings'] is Map ? rawJson['default_settings']['default_footer_text'] : null)) as String?,
+      footerLogoUrl: (json['footer_logo_url'] ?? json['footer_logo'] ?? (rawJson['default_settings'] is Map ? rawJson['default_settings']['footer_logo_url'] : null)) as String?,
+      badgeText: (json['badge_text'] ?? (rawJson['default_settings'] is Map ? rawJson['default_settings']['badge_text'] : null)) as String?,
       isActive: json['is_active'] == 1 || json['is_active'] == true,
       scansCount: json['scans_count'] as int? ?? 0,
       lastScannedAt: json['last_scanned_at'] as String?,
-      svgRaw: (json['svg_raw'] ?? json['qr_base64_svg']) as String?,
+      svgRaw: rawSvg,
       store: json['store'] is Map
           ? StoreModel.fromJson(Map<String, dynamic>.from(json['store'] as Map))
           : null,

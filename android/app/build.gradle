@@ -74,6 +74,11 @@ android {
         multiDexEnabled true
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
+        manifestPlaceholders = [
+                applicationName: "android.app.Application",
+                MAPS_API_KEY: localProperties.getProperty("MAPS_API_KEY", "")
+        ]
     }
 
 
@@ -89,7 +94,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
         }

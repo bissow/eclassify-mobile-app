@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/core/constants/app_icons.dart';
 import 'package:eClassify/core/network/api.dart';
@@ -165,17 +166,8 @@ class _SellerQrStandeeScreenState extends State<SellerQrStandeeScreen> {
           ),
         ],
       ),
-      body: BlocConsumer<SellerQrStandeeCubit, SellerQrStandeeState>(
-        listener: (context, state) {
-          if (state is SellerQrStandeeLoaded) {
-            _initFields(state.qrCode);
-          }
-        },
+      bottomNavigationBar: BlocBuilder<SellerQrStandeeCubit, SellerQrStandeeState>(
         builder: (context, state) {
-          if (state is SellerQrStandeeLoading) {
-            return const Center(child: LoadingIndicator());
-          }
-
           if (state is SellerQrStandeeLoaded || state is SellerQrStandeeUpdating) {
             final eligibility = state is SellerQrStandeeLoaded
                 ? state.eligibility
@@ -184,86 +176,135 @@ class _SellerQrStandeeScreenState extends State<SellerQrStandeeScreen> {
                 ? state.qrCode
                 : (state as SellerQrStandeeUpdating).currentQrCode;
 
-            // Case 1: No store created yet
-            if (!eligibility.hasStore) {
-              return _buildNoStoreState(context);
+            if (!eligibility.hasStore || !eligibility.isEligible) {
+              return const SizedBox.shrink();
             }
 
-            // Case 2: Package does not include QR feature
-            if (!eligibility.isEligible) {
-              return _buildUpgradeRequiredState(context, eligibility.message);
-            }
-
-            final store = eligibility.store ?? qrCode?.store;
-            final accentColor = _parseHex(_selectedColor);
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // KPI Scans Counter
-                  if (qrCode != null) _buildKpiRow(context, qrCode),
-                  const SizedBox(height: 16),
-
-                  // Standee Mockup Card
-                  _buildStandeePreview(context, store, qrCode, accentColor),
-                  const SizedBox(height: 24),
-
-                  // Customization Controls
-                  _buildCustomizerControls(context, isDark, qrCode),
-                  const SizedBox(height: 24),
-
-                  // Action Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => _downloadStandee(qrCode?.token ?? qrCode?.qrCodeToken),
-                          icon: const Icon(AppIcons.downloadSimple),
-                          label: Text('Download ${_selectedFormat.toUpperCase()}'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed:
-                              state is SellerQrStandeeUpdating ? null : _handleSave,
-                          icon: state is SellerQrStandeeUpdating
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.save),
-                          label: const Text('Save Standee'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: context.colorScheme.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: context.colorScheme.surfaceContainerHigh,
+                    width: 1,
                   ),
-                  const SizedBox(height: 24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -3),
+                  ),
                 ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _downloadStandee(qrCode?.token ?? qrCode?.qrCodeToken),
+                        icon: const Icon(AppIcons.downloadSimple),
+                        label: Text('Download ${_selectedFormat.toUpperCase()}'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            state is SellerQrStandeeUpdating ? null : _handleSave,
+                        icon: state is SellerQrStandeeUpdating
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.save),
+                        label: const Text('Save Standee'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
-
           return const SizedBox.shrink();
         },
+      ),
+      body: SafeArea(
+        top: false,
+        child: BlocConsumer<SellerQrStandeeCubit, SellerQrStandeeState>(
+          listener: (context, state) {
+            if (state is SellerQrStandeeLoaded) {
+              _initFields(state.qrCode);
+            }
+          },
+          builder: (context, state) {
+            if (state is SellerQrStandeeLoading) {
+              return const Center(child: LoadingIndicator());
+            }
+
+            if (state is SellerQrStandeeLoaded || state is SellerQrStandeeUpdating) {
+              final eligibility = state is SellerQrStandeeLoaded
+                  ? state.eligibility
+                  : (state as SellerQrStandeeUpdating).eligibility;
+              final qrCode = state is SellerQrStandeeLoaded
+                  ? state.qrCode
+                  : (state as SellerQrStandeeUpdating).currentQrCode;
+
+              // Case 1: No store created yet
+              if (!eligibility.hasStore) {
+                return _buildNoStoreState(context);
+              }
+
+              // Case 2: Package does not include QR feature
+              if (!eligibility.isEligible) {
+                return _buildUpgradeRequiredState(context, eligibility.message);
+              }
+
+              final store = eligibility.store ?? qrCode?.store;
+              final accentColor = _parseHex(_selectedColor);
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // KPI Scans Counter
+                    if (qrCode != null) _buildKpiRow(context, qrCode),
+                    const SizedBox(height: 16),
+
+                    // Standee Mockup Card
+                    _buildStandeePreview(context, store, qrCode, accentColor),
+                    const SizedBox(height: 24),
+
+                    // Customization Controls
+                    _buildCustomizerControls(context, isDark, qrCode),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
@@ -341,12 +382,7 @@ class _SellerQrStandeeScreenState extends State<SellerQrStandeeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border(
-            top: BorderSide(color: accentColor, width: 8),
-            left: BorderSide(color: Colors.grey.shade200, width: 1),
-            right: BorderSide(color: Colors.grey.shade200, width: 1),
-            bottom: BorderSide(color: Colors.grey.shade200, width: 1),
-          ),
+          border: Border.all(color: Colors.grey.shade200, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -356,9 +392,16 @@ class _SellerQrStandeeScreenState extends State<SellerQrStandeeScreen> {
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(19),
           child: Column(
             children: [
+              // Top Accent Strip
+              Container(
+                height: 8,
+                width: double.infinity,
+                color: accentColor,
+              ),
+
               // Top Pill Badge
               Container(
                 margin: const EdgeInsets.only(top: 14),
@@ -427,13 +470,7 @@ class _SellerQrStandeeScreenState extends State<SellerQrStandeeScreen> {
                     SizedBox(
                       width: 140,
                       height: 140,
-                      child: qrCode?.svgRaw != null
-                          ? SvgPicture.string(qrCode!.svgRaw!)
-                          : Icon(
-                              Icons.qr_code_2,
-                              size: 110,
-                              color: accentColor,
-                            ),
+                      child: _buildQrCodeWidget(qrCode, accentColor),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -552,6 +589,35 @@ class _SellerQrStandeeScreenState extends State<SellerQrStandeeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildQrCodeWidget(SellerQrCodeModel? qrCode, Color accentColor) {
+    if (qrCode?.svgRaw != null && qrCode!.svgRaw!.trim().isNotEmpty) {
+      String svg = qrCode.svgRaw!.trim();
+      if (svg.startsWith('data:image/svg+xml;base64,')) {
+        try {
+          svg = utf8.decode(
+            base64.decode(svg.substring('data:image/svg+xml;base64,'.length)),
+          );
+        } catch (_) {}
+      }
+      return SvgPicture.string(
+        svg,
+        width: 140,
+        height: 140,
+        fit: BoxFit.contain,
+        placeholderBuilder: (_) => Icon(
+          Icons.qr_code_2,
+          size: 110,
+          color: accentColor,
+        ),
+      );
+    }
+    return Icon(
+      Icons.qr_code_2,
+      size: 110,
+      color: accentColor,
     );
   }
 

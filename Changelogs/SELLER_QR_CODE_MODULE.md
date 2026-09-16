@@ -166,4 +166,47 @@ For merchants, a dedicated **Store QR Standee** screen was introduced in the Pro
 ### 8.3 Verification
 - Ran `flutter analyze lib/features/store/`: 0 issues found across all store models, cubits, repositories, and screens.
 
+---
 
+## 9. Updates & Bug Fixes (v3.2.5)
+
+### 9.1 Fixed Store QR Standee Assertion Failure (`A borderRadius can only be given on borders with uniform colors`)
+- **Problem**: When opening `SellerQrStandeeScreen`, the QR standee mockup card was not visible and triggered an assertion error during paint:
+  ```
+  The following assertion was thrown during paint():
+  A borderRadius can only be given on borders with uniform colors.
+  The following is not uniform: BorderSide.color
+  Container: seller_qr_standee_screen.dart:339:14
+  ```
+  The standee container combined `borderRadius: BorderRadius.circular(20)` with a non-uniform `Border(top: BorderSide(color: accentColor, width: 8), left: ..., right: ..., bottom: ...)`. Flutter disallows non-uniform border colors when `borderRadius` is set.
+- **Solution**:
+  - Updated outer container decoration in `lib/features/store/screens/seller_qr_standee_screen.dart` to use a uniform border: `Border.all(color: Colors.grey.shade200, width: 1)`.
+  - Moved the top 8px accent color bar into the `ClipRRect(borderRadius: BorderRadius.circular(19))` child column (`Container(height: 8, width: double.infinity, color: accentColor)`), preserving the exact rounded accent visual cleanly without triggering paint assertions.
+  - Added `_buildQrCodeWidget` to safely handle both raw SVG XML strings and base64-encoded SVG data URIs (`data:image/svg+xml;base64,...`) with fallback placeholder icons.
+  - Enhanced `SellerQrCodeModel.fromJson` in `lib/features/store/models/seller_qr_model.dart` to automatically decode base64 SVGs to raw SVG strings.
+
+### 9.2 Fixed Action Buttons Hidden Behind System Navigation Keys
+- **Problem**: The "Download" and "Save Standee" action buttons were at the bottom of the scroll view without bottom `SafeArea` padding. On Android devices with a 3-button navigation bar or gesture pill, the system navigation keys directly obstructed and overlapped the buttons.
+- **Solution**:
+  - Moved the action buttons into `Scaffold.bottomNavigationBar` wrapped in `SafeArea(top: false, child: ...)`.
+  - Added elevation and top border separation so the buttons remain permanently pinned, fully visible, and automatically positioned above the Android navigation bar.
+  - Wrapped `Scaffold.body` in `SafeArea(top: false)` to prevent scroll view content overlap.
+
+### 9.3 Verification
+- Ran `flutter analyze lib/features/store/`: 0 issues found across all store models, cubits, repositories, and screens.
+
+---
+
+## 10. Updates & Improvements (v3.2.5)
+
+### 10.1 Resilient API Response Handling in `SellerQrCodeModel`
+- **Modified Files**:
+  - `lib/features/store/models/seller_qr_model.dart`
+- **Changes**:
+  - Enhanced `SellerQrCodeModel.fromJson()` factory to handle both root-level maps and nested payloads (`rawJson['qr_code']` or `rawJson['data']['qr_code']`), ensuring save operations on both mobile and web backend controllers parse reliably.
+
+### 10.2 Footer Branding Logo Support in Standee Preview
+- **Modified Files**:
+  - `lib/features/store/screens/seller_qr_standee_screen.dart`
+- **Changes**:
+  - Rendered `qrCode.footerLogoUrl` alongside `defaultFooterText` in the live standee preview mockup, matching the exact layout of the Next.js web preview and PDF downloads.

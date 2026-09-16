@@ -4,7 +4,6 @@ import 'package:eClassify/core/models/paginated_result.dart';
 import 'package:eClassify/core/network/api.dart';
 import 'package:eClassify/core/utils/json_helper.dart';
 import 'package:eClassify/core/utils/log.dart';
-import 'package:eClassify/features/item/models/item.dart';
 import 'package:eClassify/features/item/models/item_preview.dart';
 import 'package:eClassify/features/store/models/seller_qr_model.dart';
 import 'package:eClassify/features/store/models/store_model.dart';
@@ -65,7 +64,7 @@ class StoreRepository {
     }
   }
 
-  Future<({StoreModel store, List<Item> items})> getStoreDetail({
+  Future<({StoreModel store, List<ItemPreview> items})> getStoreDetail({
     String? slug,
     int? id,
     double? latitude,
@@ -101,7 +100,7 @@ class StoreRepository {
 
       final items = JsonHelper.parseList(
         rawItems,
-        Item.fromJson,
+        ItemPreview.fromJson,
       );
 
       return (store: store, items: items);
