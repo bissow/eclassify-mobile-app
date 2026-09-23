@@ -12,8 +12,24 @@ import 'package:eClassify/core/extensions/number_extensions.dart';
 import 'package:eClassify/core/extensions/string_extensions.dart';
 import 'package:eClassify/core/utils/file_picker_utility.dart';
 import 'package:eClassify/core/utils/helper_utils.dart';
+import 'package:eClassify/features/ad_posting/screens/widgets/media_selection/image_editor_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+Future<void> _openImageEditor(
+  BuildContext context,
+  MediaController controller,
+  int index,
+) async {
+  if (index < 0 || index >= controller.images.length) return;
+  final imageResource = controller.images[index];
+  final editedResource = await Navigator.of(context).push<FileResource?>(
+    ImageEditorScreen.route(imageResource),
+  );
+  if (editedResource != null) {
+    controller.updateImageAt(index, editedResource);
+  }
+}
 
 class AdImageWidget extends StatelessWidget {
   const AdImageWidget({super.key});
@@ -77,6 +93,7 @@ class AdImageWidget extends StatelessWidget {
                         _ImagePreview(
                           image: displayImages[i].filePath,
                           controller: controller,
+                          onEdit: () => _openImageEditor(context, controller, i),
                           onDelete: () => controller.removeImageAt(i),
                         ),
                       if (hasMore)
@@ -232,11 +249,13 @@ class _ImagePreview extends StatelessWidget {
     required this.image,
     required this.onDelete,
     required this.controller,
+    this.onEdit,
     this.size = const Size.square(48),
   });
 
   final String image;
   final VoidCallback onDelete;
+  final VoidCallback? onEdit;
   final Size size;
   final MediaController controller;
 
@@ -251,7 +270,10 @@ class _ImagePreview extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              CustomImage(src: image, size: size, radius: 8),
+              GestureDetector(
+                onTap: onEdit,
+                child: CustomImage(src: image, size: size, radius: 8),
+              ),
               if (isOversized)
                 Positioned.fill(
                   child: ClipRRect(
@@ -265,6 +287,25 @@ class _ImagePreview extends StatelessWidget {
                         color: context.colorScheme.error,
                       ),
                     ),
+                  ),
+                ),
+              if (onEdit != null)
+                PositionedDirectional(
+                  start: -4,
+                  top: -6,
+                  child: IconButton(
+                    style: IconButton.styleFrom(
+                      backgroundColor: context.colorScheme.surface,
+                      iconSize: 10,
+                      padding: EdgeInsets.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      shape: const CircleBorder(),
+                      minimumSize: const Size.square(20),
+                      fixedSize: const Size.square(20),
+                    ),
+                    onPressed: onEdit,
+                    icon: Icon(AppIcons.pencilSimpleLine, size: 10),
                   ),
                 ),
               PositionedDirectional(
@@ -366,6 +407,11 @@ class _ImageBottomSheet extends StatelessWidget {
                                   image: image.$2.filePath,
                                   size: const Size.square(64),
                                   controller: controller,
+                                  onEdit: () => _openImageEditor(
+                                    context,
+                                    controller,
+                                    image.$1,
+                                  ),
                                   onDelete: () =>
                                       controller.removeImageAt(image.$1),
                                 ),
